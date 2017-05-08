@@ -32,3 +32,5 @@ Funcionalidades do Gerenciador de execução:
 Funcionalides:
   1. terminar todos os processos em execução;
   2. imprimir todos os processos que não foram executados ainda.
+
+Mostrar filas de mensagens: $ ipcs 
