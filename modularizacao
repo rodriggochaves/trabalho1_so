@@ -1,0 +1,13 @@
+Possíveis classes:
+
+- Processo ??
+- Processo Escalonador
+- Processo Gerente de Execução
+- Processo Shutdown
+- Nodos
+- Topologia (hypercube)
+- Mensagem
+- Conexão
+- Executável ??
+- Tupla (arquivo, delay, job)
+- Rota
