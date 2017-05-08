@@ -1,0 +1,34 @@
+Possíveis classes:
+
+- Processo ??
+- Processo Escalonador
+- Processo Gerente de Execução
+- Processo Shutdown
+- Nodos
+- Topologia (hypercube)
+- Mensagem
+- Conexão
+- Executável ??
+- Tupla (arquivo, delay, job)
+- Rota
+
+
+1. Criar um escalanador que vai mandar um comando para os gerenciados de 
+execução.
+Funcionalidades do Escalanador:
+  1. enviar mensagem a todos os gerentes de execução depois de X segundos
+
+2. Criar um gerenciador de execução que vai rebecer o comando depois de `X` 
+segundos do escalanador e vai executar o programa.
+Funcionalidades do Gerenciador de execução:
+  1. encaminhar mensagens entre os processos seus processos em execução: 
+  calcular rota válida
+  2. executar programa
+  3. marca tempo de início
+  4. retorna makespan depois que todos os processos filhos tiverem sido
+  executados
+
+3. Processo Shutdown: encerra tudo
+Funcionalides:
+  1. terminar todos os processos em execução;
+  2. imprimir todos os processos que não foram executados ainda.
