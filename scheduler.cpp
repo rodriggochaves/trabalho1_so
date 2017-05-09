@@ -10,11 +10,15 @@ int main(int argc, char const *argv[]) {
   int pid;
   int id_fila;
 
-  if (argc < 3 || argc > 3 ) {
-    std::cout << "Quantidade de argumentos inválida" << std::endl;
-    exit(1);
-  }
+  struct message {
+    long pid;
+    char program_name[30];
+    int seconds_to_wait;
+  };
 
+  struct message at_message;
+
+  // inicializa a fila com a chave do grupo
   id_fila = msgget(QUEUE_KEY, IPC_CREAT | 0777);
   if (id_fila < 0) {
     std::cout << "Erro ao criar a fila" << std::endl;
@@ -30,8 +34,15 @@ int main(int argc, char const *argv[]) {
     }
   }
 
+  // loop infinito esperando nova chamada para executar o programa em X
+  // tempos.
+  // Por enquanto, vamos fazer um loop infinito que espera uma mensagem na
+  // por uma mensagem com o programa a ser executado no tempo X
   if (pid != 0) {
-    std::cout << "Eu sou o pai" << std::endl;
+    while(1) {
+      msgrcv(id_fila, &at_message, sizeof(at_message), 0, 0);
+      std::cout << "Scheduler: " << at_message.program_name << std::endl;
+    }
   }
   
   // fazer esperar pelo tempo passado no segundo argumento

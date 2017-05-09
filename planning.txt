@@ -13,6 +13,7 @@ Possíveis classes:
 - Rota
 
 
+
 1. Criar um escalanador que vai mandar um comando para os gerenciados de 
 execução.
 Funcionalidades do Escalanador:
