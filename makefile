@@ -11,9 +11,13 @@ execution_manager:
 	$(CC) $(LIBS) -o execution_manager execution_manager.cpp
 
 hello_world:
-	$(CC) $(LIBS) hello_world.cpp	-o hello_world 
+	$(CC) $(LIBS) hello_world.cpp	-o hello_world
+	
+hypercube:
+	$(CC) $(LIBS) hypercube.cpp -o hypercube
 
 clean:
 	rm -f execution_manager
 	rm -f hello_world
 	rm -f scheduler
+	rm -f hypercube
