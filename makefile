@@ -17,9 +17,13 @@ at:
 
 hello_world:
 	$(CC) $(LIBS) -o hello_world hello_world.cpp
+	
+hypercube:
+	$(CC) $(LIBS) hypercube.cpp -o hypercube
 
 clean:
 	rm -f execution_manager
 	rm -f hello_world
 	rm -f scheduler
 	rm -f at
+	rm -f hypercube
