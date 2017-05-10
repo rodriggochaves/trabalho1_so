@@ -1,4 +1,4 @@
-#define QUEUE_KEY 0x1332624
+#define QUEUE_KEY_AT 0x1332624
 
 #include <iostream>
 #include <string>
@@ -25,7 +25,7 @@ int main(int argc, char const *argv[]) {
   }
 
   // recupera a fila em uso pelo trabalho
-  id_fila = msgget(QUEUE_KEY, 0777);
+  id_fila = msgget(QUEUE_KEY_AT, 0777);
   if( id_fila < 0 ) {
     std::cout << "error ao recuperar a fila" << std::endl;
     exit(1);
