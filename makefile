@@ -4,7 +4,7 @@ CC=clang++
 # bibliotecas
 LIBS = -std=c++11 -Wall
 
-all: at scheduler execution_manager hello_world
+all: clean at scheduler execution_manager hello_world
 
 scheduler:
 	$(CC) $(LIBS) -o scheduler scheduler.cpp
