@@ -6,10 +6,19 @@
 #define QUEUE_KEY_EMS 0x1928199
 
 #include <iostream>
+#include <string>
+#include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/msg.h>
+
+// funcao que converte um int para ponteiro para char
+const char * convert_id(int i) {
+  std::string s = std::to_string( i );
+  return s.c_str();
+}
 
 int main(int argc, char const *argv[]) {
   int pid;
@@ -42,7 +51,7 @@ int main(int argc, char const *argv[]) {
   for (int i = 0; i < 16; ++i) {
     pid = fork();
     if (pid == 0) {
-      execl("./execution_manager", "execution_manager", NULL);
+      execl("./execution_manager", "execution_manager", convert_id(i), NULL);
       break;
     }
   }
@@ -51,20 +60,20 @@ int main(int argc, char const *argv[]) {
   // tempos.
   // Por enquanto, vamos fazer um loop infinito que espera uma mensagem na
   // por uma mensagem com o programa a ser executado no tempo X
-  if (pid != 0) {
-    while(1) {
-      // fica verificando se a mensagem chegou do #at
-      msgrcv(id_queue_at, &at_message, sizeof(at_message), 0, 0);
+  // if (pid != 0) {
+  //   while(1) {
+  //     // fica verificando se a mensagem chegou do #at
+  //     msgrcv(id_queue_at, &at_message, sizeof(at_message), 0, 0);
 
-      // espera o tempo para executar
-      std::cout << "Esperando: " << at_message.seconds_to_wait << std::endl;
-      sleep(at_message.seconds_to_wait);
+  //     // espera o tempo para executar
+  //     std::cout << "Esperando: " << at_message.seconds_to_wait << std::endl;
+  //     sleep(at_message.seconds_to_wait);
 
-      // manda mensagem
-      std::strcpy(ems_message.program_name, at_message.program_name);
-      msgsnd(id_queue_ems, &ems_message, sizeof(ems_message), 0);
-    }
-  }
+  //     // manda mensagem
+  //     std::strcpy(ems_message.program_name, at_message.program_name);
+  //     msgsnd(id_queue_ems, &ems_message, sizeof(ems_message), 0);
+  //   }
+  // }
   
   // fazer esperar pelo tempo passado no segundo argumento
 
