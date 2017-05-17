@@ -3,7 +3,7 @@
 
 // chave da fila de comunicação com os gerenciadores de execução
 // EMS = executions managers
-#define QUEUE_KEY_EMS 0x1928199
+#define QUEUE_KEY_FIRST_EM 1320000
 
 #include <iostream>
 #include <string>
@@ -23,7 +23,7 @@ const char * convert_id(int i) {
 int main(int argc, char const *argv[]) {
   int pid;
   int id_queue_at;
-  int id_queue_ems;
+  int id_queue_em;
 
   struct message {
     long pid;
@@ -40,11 +40,11 @@ int main(int argc, char const *argv[]) {
     exit(1);
   }
 
-  // inicializa a fila com os em's
-  id_queue_ems = msgget(QUEUE_KEY_EMS, IPC_CREAT | 0777);
-  if (id_queue_ems < 0) {
-    std::cout << "Erro ao criar a fila 'EMS'" << std::endl;
-    exit(1); 
+  // inicializa a fila com o primeiro EM
+  id_queue_em = msgget(QUEUE_KEY_FIRST_EM, IPC_CREAT | 0777);
+  if (id_queue_em < 0) {
+    std::cout << "Erro ao criar a fila 'QUEUE_KEY_FIRST_EM'" << std::endl;
+    exit(1);
   }
 
   // criar as 16 cópias dos gerênciadores de execução
@@ -60,20 +60,20 @@ int main(int argc, char const *argv[]) {
   // tempos.
   // Por enquanto, vamos fazer um loop infinito que espera uma mensagem na
   // por uma mensagem com o programa a ser executado no tempo X
-  // if (pid != 0) {
-  //   while(1) {
-  //     // fica verificando se a mensagem chegou do #at
-  //     msgrcv(id_queue_at, &at_message, sizeof(at_message), 0, 0);
+  if (pid != 0) {
+    std::cout << "Esperando pela mensagem" << std::endl;
+    while(1) {
+      // fica verificando se a mensagem chegou do #at
+      msgrcv(id_queue_at, &at_message, sizeof(at_message), 0, 0);
 
-  //     // espera o tempo para executar
-  //     std::cout << "Esperando: " << at_message.seconds_to_wait << std::endl;
-  //     sleep(at_message.seconds_to_wait);
+      // espera o tempo para executar
+      sleep(at_message.seconds_to_wait);
 
-  //     // manda mensagem
-  //     std::strcpy(ems_message.program_name, at_message.program_name);
-  //     msgsnd(id_queue_ems, &ems_message, sizeof(ems_message), 0);
-  //   }
-  // }
+      // manda mensagem
+      std::strcpy(at_message.program_name, at_message.program_name);
+      msgsnd(id_queue_em, &ems_message, sizeof(ems_message), 0);
+    }
+  }
   
   // fazer esperar pelo tempo passado no segundo argumento
 

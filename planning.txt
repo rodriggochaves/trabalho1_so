@@ -1,3 +1,22 @@
+# Planejamento
+
+1. Escalanador
+1.1 enviar mensagem para os gerentes de execução
+1.2 manter tabela de gerentes livres/ocupados
+
+2 Gerentes de Execução (EM's)
+2.1 decidir se a mensagem tem que ser passada ou não conforme a topologia
+2.2 executar o programa
+2.3 enviar sinal ao final da execução do programa
+
+3 Programa
+3.1 executar
+
+4. Shutdown
+4.1 matar EM's
+4.2 apagar filas
+4.3 encerrar escalanador
+
 Possíveis classes:
 
 - Processo ??
@@ -12,12 +31,12 @@ Possíveis classes:
 - Tupla (arquivo, delay, job)
 - Rota
 
-
-
 1. Criar um escalanador que vai mandar um comando para os gerenciados de 
 execução.
 Funcionalidades do Escalanador:
-  1. enviar mensagem a todos os gerentes de execução depois de X segundos
+  1. enviar mensagem a todos os gerentes de execução
+  atraves da topologia
+  2. manter uma tabela de processos para a gerencimanto do EM's livres
 
 2. Criar um gerenciador de execução que vai rebecer o comando depois de `X` 
 segundos do escalanador e vai executar o programa.
