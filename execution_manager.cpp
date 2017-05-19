@@ -23,6 +23,8 @@ void listen_queues( std::vector<int> queue_em_ids ) {
   int number_of_queues = queue_em_ids.size();
   int counter = 0;
 
+  sleep(5);
+
   std::cout << "Numero de filas: " << number_of_queues << std::endl;
 
   // while(1) {
@@ -65,7 +67,7 @@ int main(int argc, char const *argv[]) {
   int em_id;
   int queue_keys[4];
   int temp;
-  std::vector<int> queue_em_ids[4];
+  std::vector<int> queue_em_ids;
   std::bitset<4> em_id_bit;
   std::vector<std::bitset<4>> neighbors;
 
@@ -75,14 +77,24 @@ int main(int argc, char const *argv[]) {
     exit(1);
   }
 
+  // id do gerente de execução corrente
   em_id = std::atoi(argv[1]);
+
+  // se estiver executando o gerente 0, ganha acesso a fila junto com o 
+  // escalanador
   if (em_id == 0) {
     queue_em_ids[4] = msgget( QUEUE_KEY_FIRST_EM, 0777 );
   }
+
+  // id do gerente atual em bits
   em_id_bit = std::bitset<4>(em_id);
+  
   // cria vizinhos
   neighbors = identifies_neighbors(em_id_bit);
-  // converte numero dos vizinhos para inteiro
+  
+  // para cada vizinho, cria a key da fila
+  // (000)       (00)                     (00)
+  // constante + maior id de um vertice + menor id do vertice
   for (int i = 0; i < 4; ++i) {
     temp = neighbors[i].to_ulong();
     if (em_id > temp) {
@@ -90,10 +102,11 @@ int main(int argc, char const *argv[]) {
     } else {
       queue_keys[i] = QUEUE_KEY_EMS + (temp * 100) + em_id;
     }
-    // std::cout << queue_keys[i] << ": " << std::hex << queue_keys[i] << std::endl;
+    std::cout << "Tentei pegar a fila" << queue_keys[i] << std::endl;
     queue_em_ids[i] = msgget( queue_keys[i], IPC_CREAT | 0777 );
   }
 
+  // ouve as filas esperando a mensagem
   listen_queues( queue_em_ids );
 
   // cria chave da fila
