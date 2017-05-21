@@ -2,7 +2,7 @@
 // EMS = executions managers
 // os ultimos dois digitos definem o numero da fila (aresta)
 #define QUEUE_KEY_EMS 1320000
-#define QUEUE_KEY_FIRST_EM 1320000
+#define QUEUE_KEY_FIRST_EM 1780000
 
 #include <iostream>
 #include <sstream>
@@ -13,38 +13,37 @@
 #include <sys/ipc.h>
 #include <sys/msg.h>
 
-void listen_queues( std::vector<int> queue_em_ids ) {
+
+void listen_queues( int queue_em_ids[], int number_of_queues ) {
   struct message {
     long pid;
     char program_name[30];
   };
   struct message received_msg;
   received_msg.pid = NULL;
-  int number_of_queues = queue_em_ids.size();
   int counter = 0;
 
-  sleep(5);
-
-  std::cout << "Numero de filas: " << number_of_queues << std::endl;
-
-  // while(1) {
-  //   counter = 0
-  //   while( counter < number_of_queues ) {
-  //     sleep(100)
-  //     msgrcv( queue_em_ids[counter], &received_msg, sizeof(received_msg), 0, MSG_NOERROR );
-  //     if ( received_msg.pid ) break;
-  //     counter += 1;
-  //     if ( counter > )
-  //   }
-  //   std::cout << "Recebi: " << received_msg.program_name << std::endl;
-  // }
+  while(1) {
+    // while( counter < number_of_queues ) {
+    //   sleep(2);
+    //   if (queue_em_ids[counter] == 131106) {
+    //     std::cout << "Escutando a fila " << queue_em_ids[counter] << std::endl;
+    //   }
+    //   msgrcv( queue_em_ids[counter], &received_msg, sizeof(received_msg), 0, 
+    //          IPC_NOWAIT );
+    //   if ( received_msg.pid ) break;
+    //   counter += 1;
+    //   if ( counter >= number_of_queues) counter = 0;
+    // }
+    // std::cout << "Recebi: " << received_msg.program_name << std::endl;
+  }
 }
 
 std::vector<std::bitset<4>> identifies_neighbors(std::bitset<4> main) {
   std::vector<std::bitset<4>> neighbors;
   for (int i = 0; i < 4; ++i) {
     std::bitset<4> copied_main = main;
-    copied_main[i] = 1 -  copied_main[i];
+    copied_main[i] = 1 - copied_main[i];
     neighbors.push_back(copied_main);
   }
   return neighbors;
@@ -63,13 +62,19 @@ int queue_key_number(std::string number) {
 }
 
 int main(int argc, char const *argv[]) {
-  int id_queue_em;
   int em_id;
   int queue_keys[4];
   int temp;
-  std::vector<int> queue_em_ids;
+  int queue_em_ids[5];
+  int number_of_queues = 0;
   std::bitset<4> em_id_bit;
   std::vector<std::bitset<4>> neighbors;
+
+  struct message {
+    long pid;
+    char program_name[30];
+  };
+  struct message received_msg;
 
   // recebe seu numero
   if (argc != 2) {
@@ -84,13 +89,17 @@ int main(int argc, char const *argv[]) {
   // escalanador
   if (em_id == 0) {
     queue_em_ids[4] = msgget( QUEUE_KEY_FIRST_EM, 0777 );
+    number_of_queues += 1;
   }
+  // daqui não trava => mentira Uring!
 
   // id do gerente atual em bits
   em_id_bit = std::bitset<4>(em_id);
   
   // cria vizinhos
   neighbors = identifies_neighbors(em_id_bit);
+
+  // std::cout << "Eu sou " << em_id << "\t";
   
   // para cada vizinho, cria a key da fila
   // (000)       (00)                     (00)
@@ -102,12 +111,20 @@ int main(int argc, char const *argv[]) {
     } else {
       queue_keys[i] = QUEUE_KEY_EMS + (temp * 100) + em_id;
     }
-    std::cout << "Tentei pegar a fila" << queue_keys[i] << std::endl;
     queue_em_ids[i] = msgget( queue_keys[i], IPC_CREAT | 0777 );
+    // printf("%d\t", queue_keys[i]);
+    // std::cout << "---" << std::hex << queue_keys[i] << std::endl;
+    number_of_queues += 1;
   }
 
   // ouve as filas esperando a mensagem
-  listen_queues( queue_em_ids );
+  // listen_queues( queue_em_ids, number_of_queues );
+  if (em_id == 0) {
+    while(1) {
+      msgrcv(196642, &received_msg, sizeof(received_msg), 0, 0);
+      std::cout << "Recebi: " << received_msg.program_name << std::endl;
+    }
+  }
 
   // cria chave da fila
   // cria fila com constante + receptor(em decimal) + emissor(em decimal)

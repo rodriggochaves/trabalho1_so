@@ -3,7 +3,7 @@
 
 // chave da fila de comunicação com os gerenciadores de execução
 // EMS = executions managers
-#define QUEUE_KEY_FIRST_EM 1320000
+#define QUEUE_KEY_FIRST_EM 1780000
 
 #include <iostream>
 #include <string>
@@ -13,6 +13,7 @@
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/msg.h>
+#include <errno.h>
 
 // funcao que converte um int para ponteiro para char
 const char * convert_id(int i) {
@@ -40,10 +41,11 @@ int main(int argc, char const *argv[]) {
     exit(1);
   }
 
-  // inicializa a fila com o primeiro EM
+  // // inicializa a fila com o primeiro EM
   id_queue_em = msgget(QUEUE_KEY_FIRST_EM, IPC_CREAT | 0777);
   if (id_queue_em < 0) {
     std::cout << "Erro ao criar a fila 'QUEUE_KEY_FIRST_EM'" << std::endl;
+    std::cout << "Erro numero => " << errno << std::endl;
     exit(1);
   }
 
@@ -56,6 +58,9 @@ int main(int argc, char const *argv[]) {
     }
   }
 
+  // while(1) {
+  // }
+
   // loop infinito esperando nova chamada para executar o programa em X
   // tempos.
   // Por enquanto, vamos fazer um loop infinito que espera uma mensagem na
@@ -67,11 +72,16 @@ int main(int argc, char const *argv[]) {
       msgrcv(id_queue_at, &at_message, sizeof(at_message), 0, 0);
 
       // espera o tempo para executar
-      sleep(at_message.seconds_to_wait);
+      std::cout << "Esperando " << at_message.seconds_to_wait << std::endl;
+      // sleep(at_message.seconds_to_wait);
 
       // manda mensagem
-      std::strcpy(at_message.program_name, at_message.program_name);
-      msgsnd(id_queue_em, &ems_message, sizeof(ems_message), 0);
+      std::strcpy(ems_message.program_name, at_message.program_name);
+      ems_message.pid = getpid();
+      std::cout << "Enviando de " << ems_message.pid << std::endl;
+      std::cout << "Enviando para " << id_queue_em << std::endl;
+      std::cout << "Enviando mensagem " << ems_message.program_name << std::endl;
+      msgsnd(id_queue_em, &ems_message, sizeof(ems_message), IPC_NOWAIT);
     }
   }
   
