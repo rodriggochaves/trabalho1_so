@@ -107,7 +107,7 @@ int main(int argc, char const *argv[]) {
       std::cout << "Enviando mensagem " << ems_message.program_name << std::endl;
       for(int i = 0; i < 16; i++) {
         ems_message.destination = i;
-        msgsnd(id_queue_em, &ems_message, sizeof(ems_message), 0);
+        msgsnd(id_queue_em, &ems_message, sizeof(ems_message), IPC_NOWAIT);
       }
     }
   }
@@ -117,7 +117,6 @@ int main(int argc, char const *argv[]) {
   // comunicar o programa a ser executado
 
   // TODO: fazer o shutdown apagar a fila do sistema
-  msgctl(id_queue_at, IPC_RMID, NULL);
 
   return 0;
 }

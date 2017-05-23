@@ -6,6 +6,7 @@
 
 #include <iostream>
 #include <sstream>
+#include <map>
 #include <vector>
 #include <unistd.h>
 #include <bitset>
@@ -26,19 +27,42 @@ void listen_queues( int queue_em_ids[], int number_of_queues ) {
   int counter = 0;
 
   while(1) {
-    // while( counter < number_of_queues ) {
-    //   sleep(2);
-    //   if (queue_em_ids[counter] == 131106) {
-    //     std::cout << "Escutando a fila " << queue_em_ids[counter] << std::endl;
-    //   }
-    //   msgrcv( queue_em_ids[counter], &received_msg, sizeof(received_msg), 0,
-    //          IPC_NOWAIT );
-    //   if ( received_msg.pid ) break;
-    //   counter += 1;
-    //   if ( counter >= number_of_queues) counter = 0;
-    // }
-    // std::cout << "Recebi: " << received_msg.program_name << std::endl;
+    while( counter < number_of_queues ) {
+      sleep(5);
+      msgrcv( queue_em_ids[counter], &received_msg, sizeof(received_msg), 0,
+             IPC_NOWAIT );
+      if ( received_msg.pid ){
+        std::cout << "Nó  " << em_id << " Recebi: " << received_msg.program_name << std::endl;
+        break;
+      }
+      counter += 1;
+      if ( counter >= number_of_queues) counter = 0;
+    }
   }
+}
+
+std::bitset<4> find_neighbour(int source, int destination) {
+  std::bitset<4> source_bit = std::bitset<4>(source);
+  std::bitset<4> destination_bit = std::bitset<4>(destination);
+  std::bitset<4> next = source_bit ^ destination_bit;
+  // std::cout << " Source: " << source_bit.to_string<char>() << " Destino: " << destination_bit.to_string<char>() << " Next: " << next.to_string<char>() << std::endl;
+  int index;
+  for(int i = 0; i < 4; i++) {
+    if(next[i] == 1) {
+      index = i;
+      break;
+    }
+  }
+  std::bitset<4> masked = std::bitset<4>(0);
+  masked[index] = 1;
+  // std::cout << "source: " << source_bit << " destino:" << destination_bit << " masked: " << masked.to_string<char>() << std::endl;
+  return masked | source_bit;
+}
+
+void handle_message(std::map<int,int> neighbours_map, struct message* message, int source) {
+  std::bitset<4> neighbour = find_neighbour(source, message->destination);
+  std::cout << "selected neighbour: " << neighbour.to_string<char>() << std::endl;
+  msgsnd(neighbours_map[neighbour.to_ulong()], message, sizeof(*message) , IPC_NOWAIT);
 }
 
 std::vector<std::bitset<4>> identifies_neighbors(std::bitset<4> main) {
@@ -94,7 +118,12 @@ int main(int argc, char const *argv[]) {
   // id do gerente de execução corrente
   em_id = std::atoi(argv[1]);
 
-
+  // se estiver executando o gerente 0, ganha acesso a fila junto com o
+  // escalanador
+  if (em_id == 0) {
+    queue_em_ids[4] = msgget( QUEUE_KEY_FIRST_EM, 0777 );
+    number_of_queues += 1;
+  }
   // daqui não trava => mentira Uring!
 
   // id do gerente atual em bits
@@ -108,31 +137,34 @@ int main(int argc, char const *argv[]) {
   // para cada vizinho, cria a key da fila
   // (000)       (00)                     (00)
   // constante + maior id de um vertice + menor id do vertice
-  // for (int i = 0; i < 4; ++i) {
-  //   temp = neighbors[i].to_ulong();
-  //   if (em_id > temp) {
-  //     queue_keys[i] = QUEUE_KEY_EMS + (em_id * 100) + temp;
-  //   } else {
-  //     queue_keys[i] = QUEUE_KEY_EMS + (temp * 100) + em_id;
-  //   }
-  //   queue_em_ids[i] = msgget( queue_keys[i], IPC_CREAT | 0777 );
-  //   // printf("%d\t", queue_keys[i]);
-  //   // std::cout << "---" << stdq::hex << queue_keys[i] << std::endl;
-  //   number_of_queues += 1;
-  // }
+  std::map<int,int> neighbours_map;
+  for (int i = 0; i < 4; ++i) {
+    temp = neighbors[i].to_ulong();
+    if (em_id > temp) {
+      queue_keys[i] = QUEUE_KEY_EMS + (em_id * 100) + temp;
+    } else {
+      queue_keys[i] = QUEUE_KEY_EMS + (temp * 100) + em_id;
+    }
+    queue_em_ids[i] = msgget( queue_keys[i], IPC_CREAT | 0777 );
+    neighbours_map[temp] = queue_em_ids[i];
+    // printf("%d\t", queue_keys[i]);
+    // std::cout << "---" << std::hex << queue_keys[i] << std::endl;
+    number_of_queues += 1;
+  }
 
   // ouve as filas esperando a mensagem
-  // listen_queues( queue_em_ids, number_of_queues );
   if (em_id == 0) {
     queue_em_ids[4] = msgget( QUEUE_KEY_FIRST_EM, 0777 );
     number_of_queues += 1;
 
     while(1) {
       msgrcv(queue_em_ids[4], &received_msg, sizeof(received_msg), 0, 0);
-      std::cout << "Recebi: " << received_msg.program_name << "\npid: "<<  received_msg.pid << std::endl;
-      // handle_message(em_id, &received_msg);
+      std::cout << "Recebi: " << received_msg.program_name << "destino: "<< received_msg.destination<< std::endl;
+      handle_message(neighbours_map, &received_msg, em_id);
     }
   }
+
+  listen_queues( queue_em_ids, number_of_queues, em_id );
 
   // cria chave da fila
   // cria fila com constante + receptor(em decimal) + emissor(em decimal)
