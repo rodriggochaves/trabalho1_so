@@ -24,7 +24,7 @@ int main(int argc, char const *argv[]) {
     exit(1);
   }
 
-  // recupera a fila em uso pelo trabalho
+  // recupera a fila <AT <-> scheduler>
   id_fila = msgget(QUEUE_KEY_AT, 0777);
   if( id_fila < 0 ) {
     std::cout << "error ao recuperar a fila" << std::endl;

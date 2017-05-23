@@ -1,3 +1,6 @@
+// chave da area de memoria compartilhada para controle dos pid's
+#define SHARED_MEMORY 0x1991222
+
 // chave da fila de comunicação com o At
 #define QUEUE_KEY_AT 0x1332624
 
@@ -10,6 +13,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <csignal>
+#include <sys/shm.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/ipc.h>
@@ -31,6 +35,8 @@ int main(int argc, char const *argv[]) {
   int pid;
   int id_queue_at;
   int id_queue_em;
+  int memory_id;
+  int* pid_pointer;
 
   struct message {
     long pid;
@@ -41,7 +47,13 @@ int main(int argc, char const *argv[]) {
 
   struct message at_message, ems_message;
 
-  std::signal(SIGTERM, prepare_to_die);
+  signal(SIGTERM, prepare_to_die);
+
+  // recupera o id da memoria
+  memory_id = shmget( SHARED_MEMORY, sizeof(int), IPC_CREAT | 0777 );
+  // salva o pid do processo do escalanador na memoria compartilhada
+  pid_pointer = (int *) shmat(memory_id, 0, 0777);
+  *pid_pointer = getpid();
 
   // inicializa a fila com o at's
   id_queue_at = msgget(QUEUE_KEY_AT, IPC_CREAT | 0777);
