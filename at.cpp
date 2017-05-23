@@ -12,7 +12,7 @@ int main(int argc, char const *argv[]) {
 
   struct message {
     long pid;
-    char program_name[30];
+    std::string program_name;
     int seconds_to_wait;
   };
 
@@ -33,8 +33,10 @@ int main(int argc, char const *argv[]) {
 
   // prepara a mensagem para colocar na fila
   msg_to_send.pid = getpid();
-  std::strcpy(msg_to_send.program_name, argv[1]);
+  msg_to_send.program_name = argv[1];
   msg_to_send.seconds_to_wait = std::stoi(argv[2]);
+
+  // envia mensagem
   msgsnd(id_fila, &msg_to_send, sizeof(msg_to_send), 0);
 
   return 0;

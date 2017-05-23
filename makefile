@@ -4,7 +4,7 @@ CC=clang++
 # bibliotecas
 LIBS = -std=c++11 -Wall
 
-all: clean at scheduler execution_manager hello_world
+all: clean at scheduler execution_manager  hello_world shutdown
 
 scheduler:
 	$(CC) $(LIBS) -o scheduler scheduler.cpp
@@ -17,7 +17,10 @@ at:
 
 hello_world:
 	$(CC) $(LIBS) -o hello_world hello_world.cpp
-	
+
+shutdown:
+	$(CC) $(LIBS) -o shutdown shutdown.cpp
+
 hypercube:
 	$(CC) $(LIBS) hypercube.cpp -o hypercube
 
@@ -26,4 +29,5 @@ clean:
 	rm -f hello_world
 	rm -f scheduler
 	rm -f at
+	rm -f shutdown
 	rm -f hypercube
