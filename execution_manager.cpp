@@ -13,13 +13,15 @@
 #include <sys/ipc.h>
 #include <sys/msg.h>
 
+typedef struct message {
+  long pid;
+  char program_name[30];
+  int seconds_to_wait;
+  int destination;
+} Message;
 
 void listen_queues( int queue_em_ids[], int number_of_queues ) {
-  struct message {
-    long pid;
-    char program_name[30];
-  };
-  struct message received_msg;
+  Message received_msg;
   received_msg.pid = NULL;
   int counter = 0;
 
@@ -29,7 +31,7 @@ void listen_queues( int queue_em_ids[], int number_of_queues ) {
     //   if (queue_em_ids[counter] == 131106) {
     //     std::cout << "Escutando a fila " << queue_em_ids[counter] << std::endl;
     //   }
-    //   msgrcv( queue_em_ids[counter], &received_msg, sizeof(received_msg), 0, 
+    //   msgrcv( queue_em_ids[counter], &received_msg, sizeof(received_msg), 0,
     //          IPC_NOWAIT );
     //   if ( received_msg.pid ) break;
     //   counter += 1;
@@ -61,6 +63,17 @@ int queue_key_number(std::string number) {
   return QUEUE_KEY_EMS;
 }
 
+std::bitset<4> find_neighbour(int source_id, int destination) {
+    std::bitset<4> destination_bit = std::bitset<4>(destination);
+    std::bitset<4> source_bit = std::bitset<4>(source_id);
+    // std::bitset<4> next = source_bit &
+
+}
+
+void handle_message(int source_id, Message* message) {
+  std::bitset<4> neighbour = find_neighbour(source_id, message->destination);
+}
+
 int main(int argc, char const *argv[]) {
   int em_id;
   int queue_keys[4];
@@ -70,10 +83,7 @@ int main(int argc, char const *argv[]) {
   std::bitset<4> em_id_bit;
   std::vector<std::bitset<4>> neighbors;
 
-  struct message {
-    long pid;
-    char program_name[30];
-  };
+
   struct message received_msg;
 
   // recebe seu numero
@@ -85,22 +95,16 @@ int main(int argc, char const *argv[]) {
   // id do gerente de execução corrente
   em_id = std::atoi(argv[1]);
 
-  // se estiver executando o gerente 0, ganha acesso a fila junto com o 
-  // escalanador
-  if (em_id == 0) {
-    queue_em_ids[4] = msgget( QUEUE_KEY_FIRST_EM, 0777 );
-    number_of_queues += 1;
-  }
   // daqui não trava => mentira Uring!
 
   // id do gerente atual em bits
   em_id_bit = std::bitset<4>(em_id);
-  
+
   // cria vizinhos
   neighbors = identifies_neighbors(em_id_bit);
 
   // std::cout << "Eu sou " << em_id << "\t";
-  
+
   // para cada vizinho, cria a key da fila
   // (000)       (00)                     (00)
   // constante + maior id de um vertice + menor id do vertice
@@ -120,16 +124,19 @@ int main(int argc, char const *argv[]) {
   // ouve as filas esperando a mensagem
   // listen_queues( queue_em_ids, number_of_queues );
   if (em_id == 0) {
+    queue_em_ids[4] = msgget( QUEUE_KEY_FIRST_EM, 0777 );
+    number_of_queues += 1;
+
     while(1) {
-      sleep(3);
-      msgrcv(196642, &received_msg, sizeof(received_msg), 0, IPC_NOWAIT);
-      std::cout << "Recebi: " << received_msg.program_name << std::endl;
+      msgrcv(queue_em_ids[4], &received_msg, sizeof(received_msg), 0, 0);
+      std::cout << "Recebi: " << received_msg.program_name << "\npid: "<<  received_msg.pid << std::endl;
+      // handle_message(em_id, &received_msg);
     }
   }
 
   // cria chave da fila
   // cria fila com constante + receptor(em decimal) + emissor(em decimal)
-  // std::cout << "Eu obtenho a fila: " <<  << std::endl; 
+  // std::cout << "Eu obtenho a fila: " <<  << std::endl;
 
   // recupera a fila em uso pelo trabalho
   // id_queue_em = msgget(QUEUE_KEY_EMS, 0777);
