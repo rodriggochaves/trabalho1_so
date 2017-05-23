@@ -9,11 +9,17 @@
 #include <string>
 #include <stdio.h>
 #include <stdlib.h>
+#include <csignal>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/msg.h>
 #include <errno.h>
+
+void prepare_to_die(int i) {
+  std::cout << "preparando para encerrar!" << std::endl;
+  exit(1);
+}
 
 // funcao que converte um int para ponteiro para char
 const char * convert_id(int i) {
@@ -34,6 +40,8 @@ int main(int argc, char const *argv[]) {
   };
 
   struct message at_message, ems_message;
+
+  std::signal(SIGTERM, prepare_to_die);
 
   // inicializa a fila com o at's
   id_queue_at = msgget(QUEUE_KEY_AT, IPC_CREAT | 0777);
