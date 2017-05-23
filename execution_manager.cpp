@@ -121,7 +121,8 @@ int main(int argc, char const *argv[]) {
   // listen_queues( queue_em_ids, number_of_queues );
   if (em_id == 0) {
     while(1) {
-      msgrcv(196642, &received_msg, sizeof(received_msg), 0, 0);
+      sleep(3);
+      msgrcv(196642, &received_msg, sizeof(received_msg), 0, IPC_NOWAIT);
       std::cout << "Recebi: " << received_msg.program_name << std::endl;
     }
   }
