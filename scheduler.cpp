@@ -30,6 +30,7 @@ int main(int argc, char const *argv[]) {
     long pid;
     char program_name[30];
     int seconds_to_wait;
+    int destination;
   };
 
   struct message at_message, ems_message;
@@ -81,15 +82,18 @@ int main(int argc, char const *argv[]) {
       std::cout << "Enviando de " << ems_message.pid << std::endl;
       std::cout << "Enviando para " << id_queue_em << std::endl;
       std::cout << "Enviando mensagem " << ems_message.program_name << std::endl;
-      msgsnd(id_queue_em, &ems_message, sizeof(ems_message), IPC_NOWAIT);
+      for(int i = 0; i < 16; i++) {
+        ems_message.destination = i;
+        msgsnd(id_queue_em, &ems_message, sizeof(ems_message), IPC_NOWAIT);
+      }
     }
   }
-  
+
   // fazer esperar pelo tempo passado no segundo argumento
 
   // comunicar o programa a ser executado
-  
+
   // TODO: fazer o shutdown apagar a fila do sistema
-  
+
   return 0;
 }
