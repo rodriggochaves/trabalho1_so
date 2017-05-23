@@ -21,6 +21,11 @@ typedef struct message {
   int destination;
 } Message;
 
+void prepare_to_die(int i) {
+  std::cout << "preparando para encerrar filho!" << std::endl;
+  exit(1);
+}
+
 void listen_queues( int queue_em_ids[], int number_of_queues, int em_id ) {
   Message received_msg;
   received_msg.pid = NULL;
@@ -103,6 +108,9 @@ int main(int argc, char const *argv[]) {
     std::cout << "Numero incorreto de argumentos" << std::endl;
     exit(1);
   }
+
+  // sinal para derrota
+  signal(SIGTERM, prepare_to_die);
 
   // id do gerente de execução corrente
   em_id = std::atoi(argv[1]);

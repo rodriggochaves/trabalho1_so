@@ -20,8 +20,20 @@
 #include <sys/msg.h>
 #include <errno.h>
 
+// variaveis globais
+int sons_pid[16];
+
 void prepare_to_die(int i) {
   std::cout << "preparando para encerrar!" << std::endl;
+
+  for (int i = 0; i < 16; i++) {
+    kill(sons_pid[i], SIGKILL);
+  }
+
+  int status;
+  // aguardar a derrota dos gerentes
+  while(wait(&status) != -1);
+
   exit(1);
 }
 
@@ -37,7 +49,6 @@ int main(int argc, char const *argv[]) {
   int id_queue_em;
   int memory_id;
   int* pid_pointer;
-  int sons_pid[16];
 
   struct message {
     long pid;
