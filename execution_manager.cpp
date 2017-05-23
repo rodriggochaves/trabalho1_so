@@ -21,7 +21,7 @@ typedef struct message {
   int destination;
 } Message;
 
-void listen_queues( int queue_em_ids[], int number_of_queues ) {
+void listen_queues( int queue_em_ids[], int number_of_queues, int em_id ) {
   Message received_msg;
   received_msg.pid = NULL;
   int counter = 0;
@@ -46,7 +46,7 @@ std::bitset<4> find_neighbour(int source, int destination) {
   std::bitset<4> destination_bit = std::bitset<4>(destination);
   std::bitset<4> next = source_bit ^ destination_bit;
   // std::cout << " Source: " << source_bit.to_string<char>() << " Destino: " << destination_bit.to_string<char>() << " Next: " << next.to_string<char>() << std::endl;
-  int index;
+  int index = 0;
   for(int i = 0; i < 4; i++) {
     if(next[i] == 1) {
       index = i;
@@ -85,17 +85,6 @@ int queue_key_number(std::string number) {
 
   // retorna chave em função em_id
   return QUEUE_KEY_EMS;
-}
-
-std::bitset<4> find_neighbour(int source_id, int destination) {
-    std::bitset<4> destination_bit = std::bitset<4>(destination);
-    std::bitset<4> source_bit = std::bitset<4>(source_id);
-    // std::bitset<4> next = source_bit &
-
-}
-
-void handle_message(int source_id, Message* message) {
-  std::bitset<4> neighbour = find_neighbour(source_id, message->destination);
 }
 
 int main(int argc, char const *argv[]) {

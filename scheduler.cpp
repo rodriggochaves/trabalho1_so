@@ -37,6 +37,7 @@ int main(int argc, char const *argv[]) {
   int id_queue_em;
   int memory_id;
   int* pid_pointer;
+  int sons_pid[16];
 
   struct message {
     long pid;
@@ -71,11 +72,13 @@ int main(int argc, char const *argv[]) {
   }
 
   // criar as 16 cópias dos gerênciadores de execução
-  for (int i = 0; i < 1; ++i) {
+  for (int i = 0; i < 16; ++i) {
     pid = fork();
     if (pid == 0) {
       execl("./execution_manager", "execution_manager", convert_id(i), NULL);
       break;
+    } else {
+      sons_pid[i] = pid;
     }
   }
 
