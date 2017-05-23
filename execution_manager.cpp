@@ -83,7 +83,6 @@ int main(int argc, char const *argv[]) {
   std::bitset<4> em_id_bit;
   std::vector<std::bitset<4>> neighbors;
 
-
   struct message received_msg;
 
   // recebe seu numero
@@ -94,6 +93,7 @@ int main(int argc, char const *argv[]) {
 
   // id do gerente de execução corrente
   em_id = std::atoi(argv[1]);
+
 
   // daqui não trava => mentira Uring!
 
@@ -108,18 +108,18 @@ int main(int argc, char const *argv[]) {
   // para cada vizinho, cria a key da fila
   // (000)       (00)                     (00)
   // constante + maior id de um vertice + menor id do vertice
-  for (int i = 0; i < 4; ++i) {
-    temp = neighbors[i].to_ulong();
-    if (em_id > temp) {
-      queue_keys[i] = QUEUE_KEY_EMS + (em_id * 100) + temp;
-    } else {
-      queue_keys[i] = QUEUE_KEY_EMS + (temp * 100) + em_id;
-    }
-    queue_em_ids[i] = msgget( queue_keys[i], IPC_CREAT | 0777 );
-    // printf("%d\t", queue_keys[i]);
-    // std::cout << "---" << std::hex << queue_keys[i] << std::endl;
-    number_of_queues += 1;
-  }
+  // for (int i = 0; i < 4; ++i) {
+  //   temp = neighbors[i].to_ulong();
+  //   if (em_id > temp) {
+  //     queue_keys[i] = QUEUE_KEY_EMS + (em_id * 100) + temp;
+  //   } else {
+  //     queue_keys[i] = QUEUE_KEY_EMS + (temp * 100) + em_id;
+  //   }
+  //   queue_em_ids[i] = msgget( queue_keys[i], IPC_CREAT | 0777 );
+  //   // printf("%d\t", queue_keys[i]);
+  //   // std::cout << "---" << stdq::hex << queue_keys[i] << std::endl;
+  //   number_of_queues += 1;
+  // }
 
   // ouve as filas esperando a mensagem
   // listen_queues( queue_em_ids, number_of_queues );
@@ -157,6 +157,9 @@ int main(int argc, char const *argv[]) {
   //     exit(0);
   //   }
   // }
+
+  // remove a fila (scheduler <-> EM 0)
+  msgctl(queue_em_ids[4], IPC_RMID, NULL);
 
   return 0;
 }

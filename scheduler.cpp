@@ -28,7 +28,7 @@ int main(int argc, char const *argv[]) {
 
   struct message {
     long pid;
-    char program_name[30];
+    std::string program_name;
     int seconds_to_wait;
     int destination;
   };
@@ -51,7 +51,7 @@ int main(int argc, char const *argv[]) {
   }
 
   // criar as 16 cópias dos gerênciadores de execução
-  for (int i = 0; i < 16; ++i) {
+  for (int i = 0; i < 1; ++i) {
     pid = fork();
     if (pid == 0) {
       execl("./execution_manager", "execution_manager", convert_id(i), NULL);
@@ -73,11 +73,14 @@ int main(int argc, char const *argv[]) {
       msgrcv(id_queue_at, &at_message, sizeof(at_message), 0, 0);
 
       // espera o tempo para executar
-      std::cout << "Esperando " << at_message.seconds_to_wait << std::endl;
+      if (at_message.pid != 0) {
+        std::cout << "Esperando " << at_message.seconds_to_wait;
+        std::cout << " para executar " << at_message.program_name << std::endl;
+      }
       // sleep(at_message.seconds_to_wait);
 
       // manda mensagem
-      std::strcpy(ems_message.program_name, at_message.program_name);
+      ems_message.program_name = at_message.program_name;
       ems_message.pid = getpid();
       std::cout << "Enviando de " << ems_message.pid << std::endl;
       std::cout << "Enviando para " << id_queue_em << std::endl;
@@ -95,5 +98,6 @@ int main(int argc, char const *argv[]) {
 
   // TODO: fazer o shutdown apagar a fila do sistema
   msgctl(id_queue_at, IPC_RMID, NULL);
+
   return 0;
 }
