@@ -22,24 +22,23 @@ struct message {
 };
 
 
-void listen_queues( int queue_em_ids[], int number_of_queues ) {
+void listen_queues( int queue_em_ids[], int number_of_queues, int em_id ) {
   struct message received_msg;
   received_msg.pid = NULL;
   int counter = 0;
 
   while(1) {
-    // while( counter < number_of_queues ) {
-    //   sleep(2);
-    //   if (queue_em_ids[counter] == 131106) {
-    //     std::cout << "Escutando a fila " << queue_em_ids[counter] << std::endl;
-    //   }
-    //   msgrcv( queue_em_ids[counter], &received_msg, sizeof(received_msg), 0,
-    //          IPC_NOWAIT );
-    //   if ( received_msg.pid ) break;
-    //   counter += 1;
-    //   if ( counter >= number_of_queues) counter = 0;
-    // }
-    // std::cout << "Recebi: " << received_msg.program_name << std::endl;
+    while( counter < number_of_queues ) {
+      sleep(5);
+      msgrcv( queue_em_ids[counter], &received_msg, sizeof(received_msg), 0,
+             IPC_NOWAIT );
+      if ( received_msg.pid ){
+        std::cout << "Nó  " << em_id << " Recebi: " << received_msg.program_name << std::endl;
+        break;
+      }
+      counter += 1;
+      if ( counter >= number_of_queues) counter = 0;
+    }
   }
 }
 
@@ -144,7 +143,6 @@ int main(int argc, char const *argv[]) {
   }
 
   // ouve as filas esperando a mensagem
-  listen_queues( queue_em_ids, number_of_queues );
   if (em_id == 0) {
     while(1) {
       msgrcv(queue_em_ids[4], &received_msg, sizeof(received_msg), 0, 0);
@@ -152,6 +150,8 @@ int main(int argc, char const *argv[]) {
       handle_message(neighbours_map, &received_msg, em_id);
     }
   }
+
+  listen_queues( queue_em_ids, number_of_queues, em_id );
 
   // cria chave da fila
   // cria fila com constante + receptor(em decimal) + emissor(em decimal)
