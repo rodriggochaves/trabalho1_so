@@ -1,3 +1,7 @@
+// status table shared memory area
+#define STATUS_TABLE 0x199122
+#define STATUS_TABLE_SEM 0x7392871
+
 // chave da area de memoria compartilhada para controle dos pid's
 #define SHARED_MEMORY 0x1991222
 
@@ -8,6 +12,7 @@
 // EMS = executions managers
 #define QUEUE_KEY_FIRST_EM 1780000
 
+#include "semaphore.hpp"
 #include <iostream>
 #include <string>
 #include <stdio.h>
@@ -21,6 +26,7 @@
 #include <errno.h>
 #include <ctime>
 #include <vector>
+#include <sys/sem.h>
 
 // variaveis globais
 int sons_pid[16];
@@ -59,6 +65,8 @@ int main(int argc, char const *argv[]) {
   int memory_id;
   int* pid_pointer;
   std::vector<Job> execution_table;
+  int status_table_id;
+  int status_table_semaphore_id;
 
   struct message {
     long pid;
@@ -70,6 +78,25 @@ int main(int argc, char const *argv[]) {
   struct message at_message, ems_message;
 
   signal(SIGTERM, prepare_to_die);
+
+  // recupera o id da memoria da tabela de ocupado
+  status_table_id = shmget( STATUS_TABLE, 16 * sizeof( int ), IPC_CREAT | 0700 );
+  if (status_table_id < 0) {
+    std::cout << "Erro ao alocar STATUS_TABLE: " << status_table_id << std::endl;
+    exit(1);
+  }
+  status_table_semaphore_id = create_semaphore( STATUS_TABLE_SEM );
+  // inicio da area de segurança
+  p_sem(status_table_semaphore_id);
+  int* status_table = (int *) shmat( status_table_id, 0, 0777 );
+  for (int i = 0; i < 16; i++)
+    status_table[i] = 0;
+  if (shmdt(status_table) < 0) {
+    std::cout << "Erro a desabilitar a memoria" << std::endl;
+  }
+  v_sem(status_table_semaphore_id);
+  // fim da area de seguranca
+
 
   // recupera o id da memoria
   memory_id = shmget( SHARED_MEMORY, sizeof(int), IPC_CREAT | 0777 );

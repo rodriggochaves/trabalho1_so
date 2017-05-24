@@ -4,13 +4,15 @@ CC=clang++
 # bibliotecas
 LIBS = -std=c++11 -Wall
 
-all: clean at scheduler execution_manager hello_world shutdown clean_queue
+all: clean semaphore at scheduler execution_manager hello_world shutdown
 
 scheduler:
-	$(CC) $(LIBS) -o scheduler scheduler.cpp
+	$(CC) $(LIBS) -c scheduler.cpp
+	$(CC) $(LIBS) -o scheduler semaphore.o scheduler.o
 
 execution_manager:
-	$(CC) $(LIBS) -o execution_manager execution_manager.cpp
+	$(CC) $(LIBS) -c execution_manager.cpp
+	$(CC) $(LIBS) -o execution_manager semaphore.o execution_manager.o
 
 at:
 	$(CC) $(LIBS) -o at at.cpp
@@ -21,8 +23,8 @@ hello_world:
 shutdown:
 	$(CC) $(LIBS) -o shutdown shutdown.cpp
 
-hypercube:
-	$(CC) $(LIBS) hypercube.cpp -o hypercube
+semaphore:
+	$(CC) $(LIBS) -c semaphore.cpp
 
 clean_queue:
 	sh remover_filas.sh

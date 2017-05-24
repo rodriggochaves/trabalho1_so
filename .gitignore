@@ -14,3 +14,9 @@ shutdown
 a\.out
 
 viewer
+
+scheduler\.o
+
+semaphore\.o
+
+execution_manager\.o

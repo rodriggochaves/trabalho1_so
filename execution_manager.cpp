@@ -1,17 +1,23 @@
+#define STATUS_TABLE 0x199122
+#define STATUS_TABLE_SEM 0x7392871
+
 // chave da fila de comunicação com os gerenciadores de execução
 // EMS = executions managers
 // os ultimos dois digitos definem o numero da fila (aresta)
 #define QUEUE_KEY_EMS 1320000
 #define QUEUE_KEY_FIRST_EM 1780000
 
+#include "semaphore.hpp"
 #include <iostream>
 #include <sstream>
 #include <map>
 #include <vector>
 #include <unistd.h>
 #include <bitset>
+#include <sys/shm.h>
 #include <sys/types.h>
 #include <sys/ipc.h>
+#include <errno.h>
 #include <sys/msg.h>
 #include <string.h>
 #include <time.h>
@@ -25,10 +31,9 @@ typedef struct message {
 
 void handle_message(std::map<int,int> neighbours_map, struct message* message, int source);
 std::bitset<4> find_neighbour(int source, int destination);
-void exec_file(char* program_name);
+void exec_file(char* program_name, int em_identifier);
 
 void prepare_to_die(int i) {
-  std::cout << "preparando para encerrar filho!" << std::endl;
   exit(1);
 }
 
@@ -40,7 +45,6 @@ void listen_queues(std::map<int,int> neighbours_map, int queue_em_ids[], int num
     sleep(2);
     for (auto const& neighbour : neighbours_map) {
       if ( msgrcv( neighbour.second, &received_msg, sizeof(received_msg), 0, IPC_NOWAIT ) > 0 ) {
-        std::cout << "Sou o nó " << em_id << " recebi a msg " <<  received_msg.program_name << " para o nó " << received_msg.destination << std::endl;
         handle_message(neighbours_map, &received_msg, em_id);
       } else {
         msgrcv( neighbour.second, &received_msg, sizeof(received_msg), 0, IPC_NOWAIT );
@@ -53,7 +57,6 @@ std::bitset<4> find_neighbour(int source, int destination) {
   std::bitset<4> source_bit = std::bitset<4>(source);
   std::bitset<4> destination_bit = std::bitset<4>(destination);
   std::bitset<4> next = source_bit ^ destination_bit;
-  // std::cout << " Source: " << source_bit.to_string<char>() << " Destino: " << destination_bit.to_string<char>() << " Next: " << next.to_string<char>() << std::endl;
   int index = 0;
   for(int i = 0; i < 4; i++) {
     if(next[i] == 1) {
@@ -63,38 +66,66 @@ std::bitset<4> find_neighbour(int source, int destination) {
   }
   std::bitset<4> masked = std::bitset<4>(0);
   masked[index] = 1;
-  // std::cout << "source: " << source_bit << " destino:" << destination_bit << " masked: " << masked.to_string<char>() << std::endl;
   return masked | source_bit;
 }
 
 void handle_message(std::map<int,int> neighbours_map, struct message* message, int source) {
   std::bitset<4> neighbour = find_neighbour(source, message->destination);
   if(source != message->destination) {
-    std::cout << " SOU O NÓ " << source << " E VOU MANDAR PARA O NÓ " << message->destination << " PASSANDO PELO " << neighbour.to_ulong() <<std::endl;
+    // encaminha mensagem para o proximo nodo afim
+    // de achar destinatário
     msgsnd(neighbours_map[neighbour.to_ulong()], message, sizeof(*message) , IPC_NOWAIT);
   } else {
-    std::cout << " SOU O NÓ " << source << " E VOU EXECUTAR O PROGRAMA " << message->program_name << std::endl;
-    exec_file(message->program_name);
+    // encaminha para executar o programa
+    exec_file(message->program_name, source);
   }
 }
 
-void exec_file(char* program_name) {
+void change_em_status(int status, int em_identifier) {
+  int status_table_id;
+  int status_table_semaphore_id;
+
+  // recupera o id da memoria da tabela de ocupado
+  status_table_id = shmget( STATUS_TABLE, 16 * sizeof(int), 0700 );
+  if (status_table_id < 0) {
+    std::cout << "ERRO AO CRIAR A FILA: " << errno << std::endl;
+  }
+  status_table_semaphore_id = create_semaphore( STATUS_TABLE_SEM );
+  // inicio da area de segurança
+  p_sem(status_table_semaphore_id);
+  int* status_table = (int *) shmat(status_table_id, 0, 0777);
+  // 1 = ocupado
+  status_table[em_identifier] = status;
+  for (int i = 0; i < 16; i++) {
+    std::cout << "EM: " << i << " ==> " << status_table[i] << std::endl;
+  }
+  if (shmdt(status_table) < 0) {
+    std::cout << "Erro a desabilitar a memoria" << std::endl;
+  }
+  v_sem(status_table_semaphore_id);
+  // fim da area de seguranca
+}
+
+void exec_file(char* program_name, int em_identifier) {
   char file_path[100];
   int status;
   int pid;
   strcpy(file_path, "./");
   strcat(file_path, program_name);
   time_t start_time = time(NULL);
-  std::cout << "Tempo de início: " << ctime(&start_time) << std::endl;
+
+  // std::cout << "Tempo de início: " << ctime(&start_time) << std::endl;
   pid = fork();
   if (pid == 0) {
+    change_em_status(1, em_identifier);
     execl(file_path, program_name, NULL);
   }
   wait(&status);
+  change_em_status(0, em_identifier);
   time_t end_time = time(NULL);
-  std::cout << "Tempo de fim: " << ctime(&end_time) << std::endl;
-  std::cout << "Tempo de execução: " << end_time - start_time << std::endl;
-  std::cout << "TERMINOU A EXECUCAO" << std::endl;
+  // std::cout << "Tempo de fim: " << ctime(&end_time) << std::endl;
+  // std::cout << "Tempo de execução: " << end_time - start_time << std::endl;
+  // std::cout << "TERMINOU A EXECUCAO" << std::endl;
 }
 
 std::vector<std::bitset<4>> identifies_neighbors(std::bitset<4> main) {
