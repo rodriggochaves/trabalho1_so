@@ -7,10 +7,10 @@
 #include <sys/sem.h>
 
 // cria uma semaforo com a chave key
-int criar_semaforo(int key);
+int create_semaphore(int key);
 
 // exclui a semaforo de id idfila
-void excluir_semaforo(int idfila);
+void delete_semaphore(int idfila);
 
 // realiza a operacao up
 void v_sem(int sem);
