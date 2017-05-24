@@ -19,9 +19,18 @@
 #include <sys/ipc.h>
 #include <sys/msg.h>
 #include <errno.h>
+#include <ctime>
+#include <vector>
 
 // variaveis globais
 int sons_pid[16];
+
+typedef struct message {
+  int job;
+  char exec_file[30];
+  time_t start_time;
+  time_t finish_time;
+} Job;
 
 void prepare_to_die(int i) {
   std::cout << "preparando para encerrar!" << std::endl;
@@ -49,6 +58,7 @@ int main(int argc, char const *argv[]) {
   int id_queue_em;
   int memory_id;
   int* pid_pointer;
+  std::vector<Job> execution_table;
 
   struct message {
     long pid;

@@ -128,8 +128,6 @@ int main(int argc, char const *argv[]) {
   std::bitset<4> em_id_bit;
   std::vector<std::bitset<4>> neighbors;
 
-  struct message received_msg;
-
   // recebe seu numero
   if (argc != 2) {
     std::cout << "Numero incorreto de argumentos" << std::endl;
