@@ -1,3 +1,6 @@
+// status table shared memory area
+#define STATUS_TABLE 0x1991222
+
 // chave da area de memoria compartilhada para controle dos pid's
 #define SHARED_MEMORY 0x1991222
 
@@ -8,6 +11,7 @@
 // EMS = executions managers
 #define QUEUE_KEY_FIRST_EM 1780000
 
+#include "semaphore.h"
 #include <iostream>
 #include <string>
 #include <stdio.h>
@@ -21,6 +25,7 @@
 #include <errno.h>
 #include <ctime>
 #include <vector>
+#include <sys/sem.h>
 
 // variaveis globais
 int sons_pid[16];
@@ -59,6 +64,8 @@ int main(int argc, char const *argv[]) {
   int memory_id;
   int* pid_pointer;
   std::vector<Job> execution_table;
+  std::vector<int> *status_table;
+  int status_table_id;
 
   struct message {
     long pid;
@@ -70,6 +77,9 @@ int main(int argc, char const *argv[]) {
   struct message at_message, ems_message;
 
   signal(SIGTERM, prepare_to_die);
+
+  // recupera o id da memoria da tabela de ocupado
+  status_table_id = shmget( STATUS_TABLE, 16 * sizeof(std::vector<int>), IPC_CREAT | 0777 );
 
   // recupera o id da memoria
   memory_id = shmget( SHARED_MEMORY, sizeof(int), IPC_CREAT | 0777 );

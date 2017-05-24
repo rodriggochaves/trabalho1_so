@@ -14,3 +14,7 @@ shutdown
 a\.out
 
 viewer
+
+scheduler\.o
+
+semaphore\.o
