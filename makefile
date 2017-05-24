@@ -4,8 +4,7 @@ CC=clang++
 # bibliotecas
 LIBS = -std=c++11 -Wall
 
-all: clean at scheduler execution_manager hello_world
-	sh remover_filas.sh
+all: clean at scheduler execution_manager hello_world clean_queue
 
 scheduler:
 	$(CC) $(LIBS) -o scheduler scheduler.cpp
@@ -24,6 +23,9 @@ shutdown:
 
 hypercube:
 	$(CC) $(LIBS) hypercube.cpp -o hypercube
+
+clean_queue:
+	sh remover_filas.sh
 
 clean:
 	rm -f execution_manager

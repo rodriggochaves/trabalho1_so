@@ -1,4 +1,3 @@
-
 ipcrm -Q 0x001424a4
 ipcrm -Q 0x00142508
 ipcrm -Q 0x001425d0
@@ -65,3 +64,5 @@ ipcrm -Q 0x0014269a
 ipcrm -Q 0x001429be
 ipcrm -Q 0x01332624
 ipcrm -Q 0x001b2920
+ipcrm -Q 0x0013d620
+ipcrm -Q 0x000001f5
