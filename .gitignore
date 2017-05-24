@@ -20,3 +20,15 @@ scheduler\.o
 semaphore\.o
 
 execution_manager\.o
+
+escalonador
+
+escalonador\.o
+
+executa_postergado
+
+gerente_execucao\.o
+
+gerente_execucao
+
+shutdown\.o
