@@ -13,6 +13,7 @@
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/msg.h>
+#include <string.h>
 
 struct message {
   long pid;
@@ -21,17 +22,20 @@ struct message {
   int destination;
 };
 
+void handle_message(std::map<int,int> neighbours_map, struct message* message, int source);
+std::bitset<4> find_neighbour(int source, int destination);
+void exec_file(char* program_name);
 
 void listen_queues(std::map<int,int> neighbours_map, int queue_em_ids[], int number_of_queues, int em_id) {
   struct message received_msg;
   received_msg.pid = NULL;
   int counter = 1;
   while(counter) {
-    sleep(2);
+    sleep(5);
     for (auto const& neighbour : neighbours_map) {
       if ( msgrcv( neighbour.second, &received_msg, sizeof(received_msg), 0, IPC_NOWAIT ) > 0 ) {
-        printf("Nó %d recebi a msg %s para o nó %d\n", em_id, received_msg.program_name, received_msg.destination);
-        // handle_message(neighbours_map, &received_msg, em_id);
+        std::cout << "Sou o nó " << em_id << " recebi a msg " <<  received_msg.program_name << " para o nó " << received_msg.destination << std::endl;
+        handle_message(neighbours_map, &received_msg, em_id);
       } else {
         msgrcv( neighbour.second, &received_msg, sizeof(received_msg), 0, IPC_NOWAIT );
       }
@@ -59,8 +63,27 @@ std::bitset<4> find_neighbour(int source, int destination) {
 
 void handle_message(std::map<int,int> neighbours_map, struct message* message, int source) {
   std::bitset<4> neighbour = find_neighbour(source, message->destination);
-  std::cout << "selected neighbour: " << neighbour.to_string<char>() << std::endl;
-  msgsnd(neighbours_map[neighbour.to_ulong()], message, sizeof(*message) , IPC_NOWAIT);
+  if(source != message->destination) {
+    std::cout << " SOU O NÓ " << source << " E VOU MANDAR PARA O NÓ " << message->destination << " PASSANDO PELO " << neighbour.to_ulong() <<std::endl;
+    msgsnd(neighbours_map[neighbour.to_ulong()], message, sizeof(*message) , IPC_NOWAIT);
+  } else {
+    std::cout << " SOU O NÓ " << source << " E VOU EXECUTAR O PROGRAMA " << message->program_name << std::endl;
+    exec_file(message->program_name);
+  }
+}
+
+void exec_file(char* program_name) {
+  char file_path[100];
+  int status;
+  int pid;
+  strcpy(file_path, "./");
+  strcat(file_path, program_name);
+  pid = fork();
+  if (pid == 0) {
+    execl(file_path, program_name, NULL);
+  }
+  wait(&status);
+  std::cout << "TERMINOU A EXECUCAO" << std::endl;
 }
 
 std::vector<std::bitset<4>> identifies_neighbors(std::bitset<4> main) {
