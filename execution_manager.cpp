@@ -26,22 +26,19 @@ void prepare_to_die(int i) {
   exit(1);
 }
 
-void listen_queues( int queue_em_ids[], int number_of_queues, int em_id ) {
-  Message received_msg;
+void listen_queues(std::map<int,int> neighbours_map, int queue_em_ids[], int number_of_queues, int em_id) {
+  struct message received_msg;
   received_msg.pid = NULL;
-  int counter = 0;
-
-  while(1) {
-    while( counter < number_of_queues ) {
-      sleep(5);
-      msgrcv( queue_em_ids[counter], &received_msg, sizeof(received_msg), 0,
-             IPC_NOWAIT );
-      if ( received_msg.pid ){
-        std::cout << "Nó  " << em_id << " Recebi: " << received_msg.program_name << std::endl;
-        break;
+  int counter = 1;
+  while(counter) {
+    sleep(2);
+    for (auto const& neighbour : neighbours_map) {
+      if ( msgrcv( neighbour.second, &received_msg, sizeof(received_msg), 0, IPC_NOWAIT ) > 0 ) {
+        printf("Nó %d recebi a msg %s para o nó %d\n", em_id, received_msg.program_name, received_msg.destination);
+        // handle_message(neighbours_map, &received_msg, em_id);
+      } else {
+        msgrcv( neighbour.second, &received_msg, sizeof(received_msg), 0, IPC_NOWAIT );
       }
-      counter += 1;
-      if ( counter >= number_of_queues) counter = 0;
     }
   }
 }
@@ -117,8 +114,10 @@ int main(int argc, char const *argv[]) {
 
   // se estiver executando o gerente 0, ganha acesso a fila junto com o
   // escalanador
+  std::map<int,int> neighbours_map;
   if (em_id == 0) {
     queue_em_ids[4] = msgget( QUEUE_KEY_FIRST_EM, 0777 );
+    neighbours_map[17] = queue_em_ids[4];
     number_of_queues += 1;
   }
   // daqui não trava => mentira Uring!
@@ -134,7 +133,7 @@ int main(int argc, char const *argv[]) {
   // para cada vizinho, cria a key da fila
   // (000)       (00)                     (00)
   // constante + maior id de um vertice + menor id do vertice
-  std::map<int,int> neighbours_map;
+
   for (int i = 0; i < 4; ++i) {
     temp = neighbors[i].to_ulong();
     if (em_id > temp) {
@@ -151,17 +150,13 @@ int main(int argc, char const *argv[]) {
 
   // ouve as filas esperando a mensagem
   if (em_id == 0) {
-    queue_em_ids[4] = msgget( QUEUE_KEY_FIRST_EM, 0777 );
-    number_of_queues += 1;
-
-    while(1) {
-      msgrcv(queue_em_ids[4], &received_msg, sizeof(received_msg), 0, 0);
-      std::cout << "Recebi: " << received_msg.program_name << "destino: "<< received_msg.destination<< std::endl;
-      handle_message(neighbours_map, &received_msg, em_id);
-    }
+    // while(1) {
+    //   msgrcv(queue_em_ids[4], &received_msg, sizeof(received_msg), 0, 0);
+    //   std::cout << "Recebi: " << received_msg.program_name << "destino: "<< received_msg.destination<< std::endl;
+      // handle_message(neighbours_map, &received_msg, em_id);
+    // }
   }
-
-  listen_queues( queue_em_ids, number_of_queues, em_id );
+  listen_queues(neighbours_map, queue_em_ids, number_of_queues, em_id );
 
   // cria chave da fila
   // cria fila com constante + receptor(em decimal) + emissor(em decimal)

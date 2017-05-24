@@ -116,11 +116,12 @@ int main(int argc, char const *argv[]) {
       // manda mensagem
       ems_message.program_name = at_message.program_name;
       ems_message.pid = getpid();
-      std::cout << "Enviando de " << ems_message.pid << std::endl;
-      std::cout << "Enviando para " << id_queue_em << std::endl;
+      // std::cout << "Enviando de " << ems_message.pid << std::endl;
+      // std::cout << "Enviando para " << id_queue_em << std::endl;
       std::cout << "Enviando mensagem " << ems_message.program_name << std::endl;
       for(int i = 0; i < 16; i++) {
         ems_message.destination = i;
+        std::cout << "escalanador: enviando mensagem para " << i << std::endl;
         msgsnd(id_queue_em, &ems_message, sizeof(ems_message), IPC_NOWAIT);
       }
     }
