@@ -25,20 +25,15 @@ struct message {
 void listen_queues(std::map<int,int> neighbours_map, int queue_em_ids[], int number_of_queues, int em_id) {
   struct message received_msg;
   received_msg.pid = NULL;
-  int counter = 0;
-  printf("id: %d\n", em_id);
-  while(1) {
-    sleep(5);
-    printf("id: %d\n", em_id);
+  int counter = 1;
+  while(counter) {
+    sleep(2);
     for (auto const& neighbour : neighbours_map) {
-      msgrcv( neighbour.second, &received_msg, sizeof(received_msg), 0, IPC_NOWAIT );
-      printf("id: %d\n", em_id);
-      printf("id da fila: %d\n", neighbour.second);
-      printf("\n");
-      if ( received_msg.pid ){
+      if ( msgrcv( neighbour.second, &received_msg, sizeof(received_msg), 0, IPC_NOWAIT ) > 0 ) {
         printf("Nó %d recebi a msg %s para o nó %d\n", em_id, received_msg.program_name, received_msg.destination);
         // handle_message(neighbours_map, &received_msg, em_id);
-        break;
+      } else {
+        msgrcv( neighbour.second, &received_msg, sizeof(received_msg), 0, IPC_NOWAIT );
       }
     }
   }
