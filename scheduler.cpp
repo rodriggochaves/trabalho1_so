@@ -12,6 +12,9 @@
 // EMS = executions managers
 #define QUEUE_KEY_FIRST_EM 1780000
 
+#define JOB_TABLE_ADDRESS_KEY 1201372
+#define JOB_TABLE_SIZE 100
+
 #include "semaphore.hpp"
 #include <iostream>
 #include <string>
@@ -31,12 +34,23 @@
 // variaveis globais
 int sons_pid[16];
 
-typedef struct message {
+typedef struct job {
   int job;
   char exec_file[30];
+  int seconds_to_wait;
   time_t start_time;
   time_t finish_time;
 } Job;
+
+struct message {
+  long pid;
+  char program_name[30];
+  int seconds_to_wait;
+  int destination;
+  int job_number;
+};
+
+Job* init_job_table();
 
 void prepare_to_die(int i) {
   std::cout << "preparando para encerrar!" << std::endl;
@@ -67,13 +81,6 @@ int main(int argc, char const *argv[]) {
   std::vector<Job> execution_table;
   int status_table_id;
   int status_table_semaphore_id;
-
-  struct message {
-    long pid;
-    char program_name[30];
-    int seconds_to_wait;
-    int destination;
-  };
 
   struct message at_message, ems_message;
 
@@ -137,17 +144,23 @@ int main(int argc, char const *argv[]) {
   // tempos.
   // Por enquanto, vamos fazer um loop infinito que espera uma mensagem na
   // por uma mensagem com o programa a ser executado no tempo X
+  int job_counter = 1;
+  Job* job_table_ptr = init_job_table();
   if (pid != 0) {
     std::cout << "Esperando pela mensagem" << std::endl;
     while(1) {
       // fica verificando se a mensagem chegou do #at
       msgrcv(id_queue_at, &at_message, sizeof(at_message), 0, 0);
-
+      Job entry;
+      entry.job = job_counter;
+      entry.seconds_to_wait = at_message.seconds_to_wait;
+      std::strcpy(entry.exec_file, at_message.program_name);
       // espera o tempo para executar
       if (at_message.pid != 0) {
         std::cout << "Esperando " << at_message.seconds_to_wait;
         std::cout << " para executar " << at_message.program_name << std::endl;
       }
+
       // sleep(at_message.seconds_to_wait);
 
       // manda mensagem
@@ -156,19 +169,26 @@ int main(int argc, char const *argv[]) {
       // std::cout << "Enviando de " << ems_message.pid << std::endl;
       // std::cout << "Enviando para " << id_queue_em << std::endl;
       std::cout << "Enviando mensagem " << ems_message.program_name << std::endl;
+      entry.start_time = time(NULL);
+      ems_message.job_number = job_counter;
+      job_table_ptr[job_counter] = entry;
       for(int i = 0; i < 16; i++) {
         ems_message.destination = i;
         std::cout << "escalanador: enviando mensagem para " << i << std::endl;
         msgsnd(id_queue_em, &ems_message, sizeof(ems_message), IPC_NOWAIT);
       }
+      job_counter++;
     }
   }
 
-  // fazer esperar pelo tempo passado no segundo argumento
-
-  // comunicar o programa a ser executado
-
-  // TODO: fazer o shutdown apagar a fila do sistema
-
   return 0;
+}
+
+Job* init_job_table() {
+    int job_table_id = shmget( JOB_TABLE_ADDRESS_KEY, JOB_TABLE_SIZE * sizeof( Job* ), IPC_CREAT | 0700);
+    if (job_table_id < 0) {
+      std::cout << "Erro ao alocar JOB_TABLE: " << job_table_id << std::endl;
+      exit(1);
+    }
+    return (Job*) shmat(job_table_id, 0, 0700);
 }
