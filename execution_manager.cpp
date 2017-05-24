@@ -14,6 +14,7 @@
 #include <sys/ipc.h>
 #include <sys/msg.h>
 #include <string.h>
+#include <time.h>
 
 typedef struct message {
   long pid;
@@ -83,11 +84,16 @@ void exec_file(char* program_name) {
   int pid;
   strcpy(file_path, "./");
   strcat(file_path, program_name);
+  time_t start_time = time(NULL);
+  std::cout << "Tempo de início: " << ctime(&start_time) << std::endl;
   pid = fork();
   if (pid == 0) {
     execl(file_path, program_name, NULL);
   }
   wait(&status);
+  time_t end_time = time(NULL);
+  std::cout << "Tempo de fim: " << ctime(&end_time) << std::endl;
+  std::cout << "Tempo de execução: " << end_time - start_time << std::endl;
   std::cout << "TERMINOU A EXECUCAO" << std::endl;
 }
 
