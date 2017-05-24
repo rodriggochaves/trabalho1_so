@@ -30,3 +30,5 @@ executa_postergado
 gerente_execucao\.o
 
 gerente_execucao
+
+shutdown\.o

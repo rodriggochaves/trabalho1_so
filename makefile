@@ -21,7 +21,8 @@ hello_world:
 	$(CC) $(LIBS) -o hello_world hello_world.cpp
 
 shutdown:
-	$(CC) $(LIBS) -o shutdown shutdown.cpp
+	$(CC) $(LIBS) -c shutdown.cpp
+	$(CC) $(LIBS) -o shutdown semaphore.o shutdown.o
 
 semaphore:
 	$(CC) $(LIBS) -c semaphore.cpp
