@@ -68,3 +68,5 @@ ipcrm -Q 0x0013d620
 ipcrm -Q 0x000001f5
 ipcrm -M 0x01991222
 ipcrm -M 0x00199122
+ipcrm -M 0x001254DA
+ipcrm -M 0x001254DC

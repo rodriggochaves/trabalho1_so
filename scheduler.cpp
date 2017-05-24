@@ -12,6 +12,7 @@
 // EMS = executions managers
 #define QUEUE_KEY_FIRST_EM 1780000
 
+#define MESSAGE_ADDRESS_KEY 1201370
 #define JOB_TABLE_ADDRESS_KEY 1201372
 #define JOB_TABLE_SIZE 100
 
@@ -42,15 +43,17 @@ typedef struct job {
   time_t finish_time;
 } Job;
 
-struct message {
+typedef struct message {
   long pid;
   char program_name[30];
   int seconds_to_wait;
   int destination;
   int job_number;
-};
+} Message;
 
+Message* init_message();
 Job* init_job_table();
+void run_delayed(int signal);
 
 void prepare_to_die(int i) {
   std::cout << "preparando para encerrar!" << std::endl;
@@ -137,9 +140,6 @@ int main(int argc, char const *argv[]) {
     }
   }
 
-  // while(1) {
-  // }
-
   // loop infinito esperando nova chamada para executar o programa em X
   // tempos.
   // Por enquanto, vamos fazer um loop infinito que espera uma mensagem na
@@ -163,25 +163,51 @@ int main(int argc, char const *argv[]) {
 
       // sleep(at_message.seconds_to_wait);
 
+      Message* message_ptr = init_message();
       // manda mensagem
-      std::strcpy(ems_message.program_name, at_message.program_name);
-      ems_message.pid = getpid();
-      // std::cout << "Enviando de " << ems_message.pid << std::endl;
-      // std::cout << "Enviando para " << id_queue_em << std::endl;
-      std::cout << "Enviando mensagem " << ems_message.program_name << std::endl;
+      std::strcpy(message_ptr->program_name, at_message.program_name);
+      message_ptr->seconds_to_wait = at_message.seconds_to_wait;
+      message_ptr->pid = getpid();
+      std::cout << "Enviando mensagem " << message_ptr->program_name << std::endl;
       entry.start_time = time(NULL);
-      ems_message.job_number = job_counter;
+      message_ptr->job_number = job_counter;
       job_table_ptr[job_counter] = entry;
-      for(int i = 0; i < 16; i++) {
-        ems_message.destination = i;
-        std::cout << "escalanador: enviando mensagem para " << i << std::endl;
-        msgsnd(id_queue_em, &ems_message, sizeof(ems_message), IPC_NOWAIT);
-      }
+
+      signal(SIGALRM, run_delayed);
+      alarm(at_message.seconds_to_wait);
+
+      //run_delayed(0);
       job_counter++;
     }
   }
 
   return 0;
+}
+
+void run_delayed(int signal) {
+  int id_queue_em = msgget(QUEUE_KEY_FIRST_EM, IPC_CREAT | 0777);
+  int message_id = shmget( MESSAGE_ADDRESS_KEY, sizeof(Message*), 0700);
+  if (message_id < 0) {
+    std::cout << "Erro em recuperar a memoria << run_delayed" << std::endl;
+  }
+  Message* message_ptr = (Message*) shmat(message_id, 0, 0777);
+
+  for(int i = 0; i < 16; i++) {
+    message_ptr->destination = i;
+    // std::cout << "escalanador: enviando mensagem para " << i << std::endl;
+    msgsnd(id_queue_em, message_ptr, sizeof(Message), IPC_NOWAIT);
+  }
+
+  return;
+}
+
+Message* init_message() {
+    int message_id = shmget( MESSAGE_ADDRESS_KEY, sizeof(Message*), IPC_CREAT | 0700);
+    if (message_id < 0) {
+      std::cout << "Erro ao alocar a mensagem: " << message_id << std::endl;
+      exit(1);
+    }
+    return (Message*) shmat(message_id, 0, 0700);
 }
 
 Job* init_job_table() {
