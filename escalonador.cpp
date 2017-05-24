@@ -174,7 +174,7 @@ int main(int argc, char const *argv[]) {
       job_table_ptr[job_counter] = entry;
       for(int i = 0; i < 16; i++) {
         ems_message.destination = i;
-        std::cout << "escalanador: enviando mensagem para " << i << std::endl;
+        // std::cout << "escalanador: enviando mensagem para " << i << std::endl;
         msgsnd(id_queue_em, &ems_message, sizeof(ems_message), IPC_NOWAIT);
       }
       job_counter++;

@@ -83,9 +83,9 @@ int main(int argc, char const *argv[]) {
   for(auto k : keys) {
     id = msgget(k, 0777);
     if (id < 0) {
-      std::cout << "Não recuperei a fila " << k << std::endl;
+      // std::cout << "Não recuperei a fila " << k << std::endl;
     } else {
-      std::cout << "Fila: " << id << std::endl;
+      // std::cout << "Fila: " << id << std::endl;
       msgctl(id, IPC_RMID, NULL);
     }
   }

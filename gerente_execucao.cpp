@@ -124,7 +124,7 @@ void exec_file(char* program_name, int em_identifier, int job_number) {
   int pid;
   strcpy(file_path, "./");
   strcat(file_path, program_name);
-  time_t start_time = time(NULL);
+  // time_t start_time = time(NULL);
 
   // std::cout << "Tempo de início: " << ctime(&start_time) << std::endl;
   pid = fork();
