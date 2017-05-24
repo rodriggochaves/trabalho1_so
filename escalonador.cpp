@@ -130,7 +130,7 @@ int main(int argc, char const *argv[]) {
   for (int i = 0; i < 16; ++i) {
     pid = fork();
     if (pid == 0) {
-      execl("./execution_manager", "execution_manager", convert_id(i), NULL);
+      execl("./gerente_execucao", "gerente_execucao", convert_id(i), NULL);
       break;
     } else {
       sons_pid[i] = pid;

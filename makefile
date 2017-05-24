@@ -7,15 +7,15 @@ LIBS = -std=c++11 -Wall
 all: clean semaphore at scheduler execution_manager hello_world shutdown
 
 scheduler:
-	$(CC) $(LIBS) -c scheduler.cpp
-	$(CC) $(LIBS) -o scheduler semaphore.o scheduler.o
+	$(CC) $(LIBS) -c escalonador.cpp
+	$(CC) $(LIBS) -o escalonador semaphore.o escalonador.o
 
 execution_manager:
-	$(CC) $(LIBS) -c execution_manager.cpp
-	$(CC) $(LIBS) -o execution_manager semaphore.o execution_manager.o
+	$(CC) $(LIBS) -c gerente_execucao.cpp
+	$(CC) $(LIBS) -o gerente_execucao semaphore.o gerente_execucao.o
 
 at:
-	$(CC) $(LIBS) -o at at.cpp
+	$(CC) $(LIBS) -o executa_postergado executa_postergado.cpp
 
 hello_world:
 	$(CC) $(LIBS) -o hello_world hello_world.cpp
