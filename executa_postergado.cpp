@@ -10,13 +10,15 @@
 int main(int argc, char const *argv[]) {
   int id_fila;
 
-  struct message {
+  typedef struct message {
     long pid;
     char program_name[30];
     int seconds_to_wait;
-  };
+    int destination;
+    int job_number;
+  } Message;
 
-  struct message msg_to_send;
+  Message msg_to_send;
 
   // falha com a quantidade de argumentos errada
   if (argc < 3 || argc > 3 ) {

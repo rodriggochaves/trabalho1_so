@@ -52,11 +52,12 @@ void prepare_to_die(int i) {
 void listen_queues(std::map<int,int> neighbours_map, int queue_em_ids[], int number_of_queues, int em_id) {
   Message received_msg;
   received_msg.pid = NULL;
-  int counter = 1;
-  while( counter ) {
+  int counter = em_id;
+  while( counter + 1 ) {
     sleep(2);
     for (auto const& neighbour : neighbours_map) {
-      if ( msgrcv( neighbour.second, &received_msg, sizeof(received_msg), 0, IPC_NOWAIT ) > 0 ) {
+      if ( msgrcv( neighbour.second, &received_msg, sizeof(received_msg), 0, IPC_NOWAIT ) >= 0 ) {
+        // std::cout << "EM: " << counter << received_msg.program_name << std::endl;
         handle_message(neighbours_map, &received_msg, em_id);
       } else {
         msgrcv( neighbour.second, &received_msg, sizeof(received_msg), 0, IPC_NOWAIT );
@@ -201,7 +202,10 @@ int main(int argc, char const *argv[]) {
   // escalanador
   std::map<int,int> neighbours_map;
   if (em_id == 0) {
-    queue_em_ids[4] = msgget( QUEUE_KEY_FIRST_EM, 0777 );
+    queue_em_ids[4] = msgget( QUEUE_KEY_FIRST_EM, 0700 );
+    if (queue_em_ids[4] < 0) {
+      std::cout << "PUTA QUE PARIU" << std::endl;
+    }
     neighbours_map[17] = queue_em_ids[4];
     number_of_queues += 1;
   }
