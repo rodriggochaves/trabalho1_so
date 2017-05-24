@@ -1,5 +1,7 @@
 #define STATUS_TABLE 0x199122
 #define STATUS_TABLE_SEM 0x7392871
+#define JOB_TABLE_ADDRESS_KEY 1201372
+#define JOB_TABLE_SIZE 100
 
 // chave da fila de comunicação com os gerenciadores de execução
 // EMS = executions managers
@@ -22,16 +24,26 @@
 #include <string.h>
 #include <time.h>
 
+typedef struct job {
+  int job;
+  char exec_file[30];
+  int seconds_to_wait;
+  time_t start_time;
+  time_t finish_time;
+} Job;
+
 typedef struct message {
   long pid;
   char program_name[30];
   int seconds_to_wait;
   int destination;
+  int job_number;
 } Message;
 
 void handle_message(std::map<int,int> neighbours_map, struct message* message, int source);
 std::bitset<4> find_neighbour(int source, int destination);
-void exec_file(char* program_name, int em_identifier);
+void exec_file(char*, int, int );
+Job* get_job_entry(int job_number);
 
 void prepare_to_die(int i) {
   exit(1);
@@ -77,7 +89,7 @@ void handle_message(std::map<int,int> neighbours_map, struct message* message, i
     msgsnd(neighbours_map[neighbour.to_ulong()], message, sizeof(*message) , IPC_NOWAIT);
   } else {
     // encaminha para executar o programa
-    exec_file(message->program_name, source);
+    exec_file(message->program_name, source, message->job_number);
   }
 }
 
@@ -96,9 +108,9 @@ void change_em_status(int status, int em_identifier) {
   int* status_table = (int *) shmat(status_table_id, 0, 0777);
   // 1 = ocupado
   status_table[em_identifier] = status;
-  for (int i = 0; i < 16; i++) {
-    std::cout << "EM: " << i << " ==> " << status_table[i] << std::endl;
-  }
+  // for (int i = 0; i < 16; i++) {
+  //   std::cout << "EM: " << i << " ==> " << status_table[i] << std::endl;
+  // }
   if (shmdt(status_table) < 0) {
     std::cout << "Erro a desabilitar a memoria" << std::endl;
   }
@@ -106,7 +118,7 @@ void change_em_status(int status, int em_identifier) {
   // fim da area de seguranca
 }
 
-void exec_file(char* program_name, int em_identifier) {
+void exec_file(char* program_name, int em_identifier, int job_number) {
   char file_path[100];
   int status;
   int pid;
@@ -121,13 +133,27 @@ void exec_file(char* program_name, int em_identifier) {
     execl(file_path, program_name, NULL);
   }
   wait(&status);
-  change_em_status(0, em_identifier);
   time_t end_time = time(NULL);
-  // std::cout << "Tempo de fim: " << ctime(&end_time) << std::endl;
-  // std::cout << "Tempo de execução: " << end_time - start_time << std::endl;
-  // std::cout << "TERMINOU A EXECUCAO" << std::endl;
+  change_em_status(0, em_identifier);
+
+  if(em_identifier == 15) {
+    Job* entry = get_job_entry(job_number);
+    std::cout << "Job number: " << entry->job << std::endl;
+    std::cout << "Arquivo: " << entry->exec_file << std::endl;
+    std::cout << "Delay: " << entry->seconds_to_wait << std::endl;
+    std::cout << "Hora de Início: " << ctime(&entry->start_time) << std::endl;
+    entry->finish_time = end_time;
+    std::cout << "Hora de Fim: " << ctime(&entry->finish_time) << std::endl;
+    std::cout << "Makespan: " << entry->finish_time - entry->start_time << std::endl;
+  }
+
 }
 
+Job* get_job_entry(int job_number) {
+  int job_table_id = shmget( JOB_TABLE_ADDRESS_KEY, JOB_TABLE_SIZE * sizeof( Job* ), 0700);
+  Job* job_table = (Job*) shmat(job_table_id, 0, 0700);
+  return &job_table[job_number];
+}
 std::vector<std::bitset<4>> identifies_neighbors(std::bitset<4> main) {
   std::vector<std::bitset<4>> neighbors;
   for (int i = 0; i < 4; ++i) {
