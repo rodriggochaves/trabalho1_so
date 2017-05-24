@@ -17,7 +17,7 @@
 
 typedef struct message {
   long pid;
-  std::string program_name;
+  char program_name[30];
   int seconds_to_wait;
   int destination;
 } Message;
@@ -34,9 +34,9 @@ void prepare_to_die(int i) {
 void listen_queues(std::map<int,int> neighbours_map, int queue_em_ids[], int number_of_queues, int em_id) {
   Message received_msg;
   received_msg.pid = NULL;
-  int counter = em_id;
-  while( 1 ) {
-    sleep(5);
+  int counter = 1;
+  while( counter ) {
+    sleep(2);
     for (auto const& neighbour : neighbours_map) {
       if ( msgrcv( neighbour.second, &received_msg, sizeof(received_msg), 0, IPC_NOWAIT ) > 0 ) {
         std::cout << "Sou o nó " << em_id << " recebi a msg " <<  received_msg.program_name << " para o nó " << received_msg.destination << std::endl;

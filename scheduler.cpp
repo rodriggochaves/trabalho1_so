@@ -52,7 +52,7 @@ int main(int argc, char const *argv[]) {
 
   struct message {
     long pid;
-    std::string program_name;
+    char program_name[30];
     int seconds_to_wait;
     int destination;
   };
@@ -114,7 +114,7 @@ int main(int argc, char const *argv[]) {
       // sleep(at_message.seconds_to_wait);
 
       // manda mensagem
-      ems_message.program_name = at_message.program_name;
+      std::strcpy(ems_message.program_name, at_message.program_name);
       ems_message.pid = getpid();
       // std::cout << "Enviando de " << ems_message.pid << std::endl;
       // std::cout << "Enviando para " << id_queue_em << std::endl;
