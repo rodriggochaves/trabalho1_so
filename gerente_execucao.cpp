@@ -204,7 +204,7 @@ int main(int argc, char const *argv[]) {
   if (em_id == 0) {
     queue_em_ids[4] = msgget( QUEUE_KEY_FIRST_EM, 0700 );
     if (queue_em_ids[4] < 0) {
-      std::cout << "PUTA QUE PARIU" << std::endl;
+      std::cout << "erro" << std::endl;
     }
     neighbours_map[17] = queue_em_ids[4];
     number_of_queues += 1;
